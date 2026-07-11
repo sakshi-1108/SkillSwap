@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from theme import *
 
 class SplashScreen(ctk.CTk):
 
