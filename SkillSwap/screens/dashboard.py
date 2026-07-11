@@ -1,15 +1,22 @@
 import customtkinter as ctk
-from database.database import get_all_users, search_users
+from theme import *
+from database.database import (
+    get_all_users,
+    search_users,
+    get_pending_request_count,
+    get_dashboard_stats,
+)
+
 
 class DashboardScreen(ctk.CTkScrollableFrame):
 
     def __init__(self, parent, user):
+
         super().__init__(parent)
 
         self.parent = parent
         self.user = user
 
-        # Logged-in user information
         self.logged_name = user[1]
         self.logged_skill = user[4]
         self.logged_learn = user[5]
@@ -17,147 +24,367 @@ class DashboardScreen(ctk.CTkScrollableFrame):
         self.pack(fill="both", expand=True)
 
         # ==========================
-        # TITLE
+        # HEADER
         # ==========================
-        title = ctk.CTkLabel(
+        header = ctk.CTkFrame(
             self,
-            text="SkillSwap",
-            font=("Arial", 34, "bold")
+            corner_radius=15
         )
-        title.pack(pady=(20, 5))
+        header.pack(fill="x", padx=20, pady=(20, 15))
 
-        welcome = ctk.CTkLabel(
-            self,
-            text=f"👋 Welcome, {self.logged_name}",
-            font=("Arial", 24, "bold")
-        )
-        welcome.pack()
+        ctk.CTkLabel(
+            header,
+            text="🚀 SkillSwap",
+            font=("Segoe UI", 34, "bold"),
+            text_color="#4F46E5"
+        ).pack(pady=(18, 5))
+
+        ctk.CTkLabel(
+            header,
+            text="Connect • Learn • Grow Together",
+            font=("Segoe UI", 16),
+            text_color="gray"
+        ).pack()
+
+        ctk.CTkLabel(
+            header,
+            text=f"👋 Welcome back, {self.logged_name}",
+            font=("Segoe UI", 24, "bold")
+        ).pack(pady=(15, 5))
+
+        ctk.CTkLabel(
+            header,
+            text="Find people who can teach you and share your own skills.",
+            font=("Segoe UI", 15),
+            text_color="gray"
+        ).pack(pady=(0, 18))
 
         # ==========================
-        # SEARCH BAR
+        # TOP BUTTONS
+        # ==========================
+        top_frame = ctk.CTkFrame(
+            self,
+            fg_color="transparent"
+        )
+        top_frame.pack(fill="x", padx=20, pady=15)
+
+        ctk.CTkButton(
+            top_frame,
+            text="✏ Edit Profile",
+            width=140,
+            height=40,
+            command=lambda: self.parent.show_edit_profile(self.user),
+            **BUTTON
+        ).pack(side="left", padx=10)
+
+        total_users, pending, accepted, history = get_dashboard_stats(self.user)
+
+        ctk.CTkButton(
+            top_frame,
+            text=f"📨 My Requests ({pending})",
+            width=160,
+            height=40,
+            command=lambda: self.parent.show_requests(self.user),
+            **BUTTON
+        ).pack(side="left", padx=10)
+
+        ctk.CTkButton(
+            top_frame,
+            text="📜 History",
+            width=140,
+            height=40,
+            command=lambda: self.parent.show_history(self.user),
+            **BUTTON
+        ).pack(side="left", padx=10)
+
+        # ==========================
+        # LOAD USERS (must happen before matches is computed)
+        # ==========================
+        self.users = get_all_users(self.logged_name)
+        matches = self.get_recommended_matches()
+
+        # ==========================
+        # DASHBOARD STATISTICS (single block, no duplicates)
+        # ==========================
+        stats_frame = ctk.CTkFrame(
+            self,
+            fg_color="transparent"
+        )
+        stats_frame.pack(pady=20)
+
+        self.total_label = self.create_stat_card(
+            stats_frame,
+            "👥",
+            "Total Users",
+            total_users,
+            "#4F46E5"
+        )
+
+        self.create_stat_card(
+            stats_frame,
+            "📨",
+            "Pending",
+            pending,
+            "#F59E0B"
+        )
+
+        self.create_stat_card(
+            stats_frame,
+            "🤝",
+            "Accepted",
+            accepted,
+            "#22C55E"
+        )
+
+        self.create_stat_card(
+            stats_frame,
+            "📜",
+            "History",
+            history,
+            "#9333EA"
+        )
+
+        self.match_label = self.create_stat_card(
+            stats_frame,
+            "⭐",
+            "Matches",
+            len(matches),
+            "#4F46E5"
+        )
+
+        # ==========================
+        # SEARCH
         # ==========================
         self.search = ctk.CTkEntry(
             self,
-            placeholder_text="Search by Skill...",
+            placeholder_text="Search by Name or Skill...",
             width=450,
             height=40
         )
-        self.search.pack(pady=20)
-        #self.search.bind("<KeyRelease>", self.filter_users)
-        # ==========================
-        # GET USERS
-        # ==========================
-        self.users = get_all_users()
-        users = self.users
+        self.search.pack(pady=15)
 
-        total_users = len(users)
-
-        matches = []
-
-        for name, teach, learn in users:
-
-            # Don't show yourself
-            if name.strip().lower() == self.logged_name.strip().lower():
-    
-                continue
-
-            # Match users who teach what I want
-            if teach.strip().lower() == self.logged_learn.strip().lower():
-                matches.append((name, teach, learn))
-
-        # ==========================
-        # STATS
-        # ==========================
-        stats = ctk.CTkFrame(self)
-        stats.pack(fill="x", padx=20, pady=10)
-
-        ctk.CTkLabel(
-            stats,
-            text=f"👥 Total Users : {total_users}",
-            font=("Arial", 15, "bold")
-        ).pack(side="left", padx=20, pady=10)
-
-        ctk.CTkLabel(
-            stats,
-            text=f"⭐ Matches Found : {len(matches)}",
-            font=("Arial", 15, "bold")
-        ).pack(side="right", padx=20)
+        self.search.bind("<KeyRelease>", self.filter_users)
 
         # ==========================
         # HEADING
         # ==========================
-        heading = ctk.CTkLabel(
+        ctk.CTkLabel(
             self,
             text="Recommended Skill Matches",
-            font=("Arial", 22, "bold")
+            font=("Segoe UI", 24, "bold"),
+            text_color="#4F46E5"
+        ).pack(pady=15)
+
+        # ==========================
+        # CARD AREA
+        # ==========================
+        self.cards_frame = ctk.CTkFrame(
+            self,
+            fg_color="transparent"
         )
-        heading.pack(pady=15)
+        self.cards_frame.pack(fill="both", expand=True, padx=20)
+
+        self.show_recommended()
 
         # ==========================
-        # USER CARDS
+        # LOGOUT
         # ==========================
-        if len(matches) == 0:
-
-            ctk.CTkLabel(
-                self,
-                text="No matching users found.",
-                font=("Arial", 18),
-                text_color="gray"
-            ).pack(pady=30)
-
-        else:
-
-            for name, teach, learn in matches:
-
-                card = ctk.CTkFrame(
-                    self,
-                    corner_radius=15,
-                    border_width=2,
-                    border_color="#4F46E5"
-                )
-
-                card.pack(fill="x", padx=20, pady=12)
-
-                ctk.CTkLabel(
-                    card,
-                    text=f"👤 {name}",
-                    font=("Arial", 20, "bold")
-                ).pack(anchor="w", padx=20, pady=(15, 5))
-
-                ctk.CTkLabel(
-                    card,
-                    text=f"📘 Can Teach : {teach}",
-                    font=("Arial", 15)
-                ).pack(anchor="w", padx=20)
-
-                ctk.CTkLabel(
-                    card,
-                    text=f"📗 Wants To Learn : {learn}",
-                    font=("Arial", 15)
-                ).pack(anchor="w", padx=20)
-
-                ctk.CTkLabel(
-                    card,
-                    text="⭐⭐⭐⭐⭐ Skill Match",
-                    text_color="green",
-                    font=("Arial", 14, "bold")
-                ).pack(anchor="w", padx=20, pady=8)
-
-                ctk.CTkButton(
-    card,
-    text="View Profile",
-    width=120,
-    command=lambda u=(name, teach, learn):
-        self.parent.show_profile(self.user, u)
-).pack(anchor="e", padx=20, pady=(0,15))
-
-        # ==========================
-        # LOGOUT BUTTON
-        # ==========================
-        logout = ctk.CTkButton(
+        ctk.CTkButton(
             self,
             text="Logout",
             width=180,
-            command=self.parent.show_login
+            command=self.parent.show_login,
+            **DANGER_BUTTON
+        ).pack(pady=25)
+
+    # ==========================
+    # COMPUTE RECOMMENDED MATCHES (shared by stats + show_recommended)
+    # ==========================
+    def get_recommended_matches(self):
+
+        matches = []
+
+        for name, teach, learn in self.users:
+
+            if name.strip().lower() == self.logged_name.strip().lower():
+                continue
+
+            if teach.strip().lower() == self.logged_learn.strip().lower():
+                matches.append((name, teach, learn))
+
+        return matches
+
+    # ==========================
+    # SHOW RECOMMENDED USERS
+    # ==========================
+    def show_recommended(self):
+
+        matches = self.get_recommended_matches()
+        self.display_users(matches)
+
+    # ==========================
+    # DISPLAY USERS
+    # ==========================
+    def display_users(self, users):
+
+        for widget in self.cards_frame.winfo_children():
+            widget.destroy()
+
+        self.total_label.configure(
+            text=str(len(self.users))
         )
-        logout.pack(pady=25)
+
+        self.match_label.configure(
+            text=str(len(users))
+        )
+
+        if len(users) == 0:
+
+            ctk.CTkLabel(
+                self.cards_frame,
+                text="No users found.",
+                font=("Arial", 18),
+                text_color="gray"
+            ).pack(pady=40)
+
+            return
+
+        for name, teach, learn in users:
+
+            card = ctk.CTkFrame(
+                self.cards_frame,
+                corner_radius=15,
+                border_width=2,
+                border_color="#4F46E5"
+            )
+
+            card.pack(fill="x", pady=15)
+
+            ctk.CTkLabel(
+                card,
+                text=f"👤 {name}",
+                font=("Arial", 20, "bold"),
+                text_color="#111827"
+            ).pack(anchor="w", padx=20, pady=(15, 5))
+
+            ctk.CTkLabel(
+                card,
+                text=f"📘 Can Teach : {teach}",
+                text_color="#2563EB"
+            ).pack(anchor="w", padx=20)
+
+            ctk.CTkLabel(
+                card,
+                text=f"📗 Wants To Learn : {learn}",
+                text_color="#16A34A"
+            ).pack(anchor="w", padx=20)
+
+            # ==========================
+            # MATCH SCORE
+            # ==========================
+            match_score = 0
+
+            # They teach what I want to learn
+            if teach.strip().lower() == self.logged_learn.strip().lower():
+                match_score += 50
+
+            # They want to learn what I teach
+            if learn.strip().lower() == self.logged_skill.strip().lower():
+                match_score += 50
+
+            # Match text
+            if match_score == 100:
+                match_text = "⭐⭐⭐⭐⭐ Excellent Match"
+                color = "#22C55E"
+
+            elif match_score == 50:
+                match_text = "⭐⭐⭐ Good Match"
+                color = "#F59E0B"
+
+            else:
+                match_text = "⭐ Low Match"
+                color = "#EF4444"
+
+            ctk.CTkLabel(
+                card,
+                text=f"🎯 Match Score : {match_score}%",
+                font=("Segoe UI", 16, "bold"),
+                text_color=color
+            ).pack(anchor="w", padx=20, pady=(5, 0))
+
+            ctk.CTkLabel(
+                card,
+                text=match_text,
+                font=("Segoe UI", 14, "bold"),
+                text_color=color
+            ).pack(anchor="w", padx=20, pady=(0, 8))
+
+            ctk.CTkButton(
+                card,
+                text="View Profile",
+                width=140,
+                command=lambda u=(name, teach, learn):
+                    self.parent.show_profile(self.user, u),
+                **BUTTON
+            ).pack(anchor="e", padx=20, pady=(0, 15))
+
+    # ==========================
+    # SEARCH
+    # ==========================
+    def filter_users(self, event=None):
+
+        text = self.search.get().strip()
+
+        if text == "":
+            self.show_recommended()
+            return
+
+        users = search_users(text)
+
+        filtered = []
+
+        for name, teach, learn in users:
+
+            if name.strip().lower() == self.logged_name.strip().lower():
+                continue
+
+            filtered.append((name, teach, learn))
+
+        self.display_users(filtered)
+
+    # =====================================
+    # CREATE STAT CARD
+    # =====================================
+    def create_stat_card(self, parent, icon, title, value, color):
+
+        card = ctk.CTkFrame(
+            parent,
+            width=180,
+            height=110,
+            corner_radius=15
+        )
+
+        card.pack(side="left", padx=10)
+        card.pack_propagate(False)
+
+        ctk.CTkLabel(
+            card,
+            text=icon,
+            font=("Segoe UI", 28)
+        ).pack(pady=(10, 0))
+
+        ctk.CTkLabel(
+            card,
+            text=title,
+            font=("Segoe UI", 15)
+        ).pack()
+
+        value_label = ctk.CTkLabel(
+            card,
+            text=str(value),
+            font=("Segoe UI", 22, "bold"),
+            text_color=color
+        )
+        value_label.pack()
+
+        return value_label
