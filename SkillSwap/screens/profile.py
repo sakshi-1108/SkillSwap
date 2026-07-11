@@ -1,5 +1,11 @@
 import customtkinter as ctk
-
+from tkinter import messagebox
+from database.database import (
+    send_request,
+    get_about,
+    get_request_status
+)
+from theme import *
 
 class ProfileScreen(ctk.CTkFrame):
 
@@ -14,63 +20,120 @@ class ProfileScreen(ctk.CTkFrame):
         self.pack(fill="both", expand=True)
 
         # ==========================
-        # HEADING
+        # TITLE
         # ==========================
         ctk.CTkLabel(
             self,
-            text="User Profile",
-            font=("Segoe UI", 28, "bold")
-        ).pack(pady=20)
+            text="👤 User Profile",
+            font=("Segoe UI", 32, "bold"),
+            text_color="#4F46E5"
+        ).pack(pady=25)
 
         # ==========================
-        # NAME
+        # PROFILE CARD
         # ==========================
+        card = ctk.CTkFrame(
+           self,
+           width=750,
+           corner_radius=20,
+           border_width=2,
+           border_color="#E5E7EB"
+    )
+        
+        card.pack(fill="x", padx=40, pady=10)
+
+        # Name
         ctk.CTkLabel(
-            self,
-            text=f"👤 Name : {selected_user[0]}",
-            font=("Segoe UI", 18)
-        ).pack(anchor="w", padx=40, pady=10)
+            card,
+            text=f"👤 {self.selected_user[0]}",
+            font=("Segoe UI", 28, "bold"),
+            text_color="#111827",
+        ).pack(anchor="w", padx=25, pady=(20, 10))
 
-        # ==========================
-        # SKILL
-        # ==========================
+        # Skill
         ctk.CTkLabel(
-            self,
-            text=f"📘 Can Teach : {selected_user[1]}",
-            font=("Segoe UI", 18)
-        ).pack(anchor="w", padx=40)
+            card,
+            text=f"📘 Can Teach:  {self.selected_user[1]}",
+            font=("Segoe UI", 17),
+            text_color="#2563EB"
+        ).pack(anchor="w", padx=25, pady=5)
 
-        # ==========================
-        # LEARNING
-        # ==========================
+        # Learn Skill
         ctk.CTkLabel(
-            self,
-            text=f"📗 Wants To Learn : {selected_user[2]}",
-            font=("Segoe UI", 18)
-        ).pack(anchor="w", padx=40, pady=(0, 20))
+            card,
+            text=f"📗 Wants to Learn:  {self.selected_user[2]}",
+            font=("Segoe UI", 17),
+            text_color="#16A34A" 
+        ).pack(anchor="w", padx=25, pady=5)
 
-        # ==========================
-        # ABOUT
-        # ==========================
+        # About Heading
         ctk.CTkLabel(
-            self,
-            text="About",
-            font=("Segoe UI", 20, "bold")
-        ).pack(anchor="w", padx=40)
+            card,
+            text="📝 About",
+            font=("Segoe UI", 21, "bold"),
+            text_color="#4F46E5"
+        ).pack(anchor="w", padx=25, pady=(20, 5))
 
+        # About Box
         self.about_box = ctk.CTkTextbox(
-            self,
-            width=600,
-            height=120
+            card,
+            width=650,
+            height=140,
+            corner_radius=12
         )
-        self.about_box.pack(padx=40, pady=10)
+        self.about_box.pack(padx=25, pady=(0, 20))
 
         self.about_box.insert(
             "0.0",
-            "This user hasn't added an introduction yet."
+                get_about(self.selected_user[0])
         )
 
         self.about_box.configure(state="disabled")
+
+        # ==========================
+        # SEND REQUEST BUTTON
+        # ==========================
+        status = get_request_status(
+         self.current_user[0],
+        self.selected_user[0]
+        )
+
+        if status is None:
+
+         ctk.CTkButton(
+         self,
+         text="📩 Send Skill Swap Request",
+         width=260,
+         command=self.send_skill_request,
+        **BUTTON
+         ).pack(pady=20)
+
+        elif status == "Pending":
+
+         ctk.CTkButton(
+          self,
+          text="⏳ Request Pending",
+          width=260,
+          state="disabled"
+         ).pack(pady=20)
+
+        elif status == "Accepted":
+
+            ctk.CTkButton(
+              self,
+              text="✅ Request Accepted",
+              width=260,
+             state="disabled"
+    ).pack(pady=20)
+
+        else:
+
+         ctk.CTkButton(
+            self,
+          text="❌ Request Rejected",
+         width=260,
+         state="disabled"
+    ).pack(pady=20)
 
         # ==========================
         # BACK BUTTON
@@ -79,5 +142,30 @@ class ProfileScreen(ctk.CTkFrame):
             self,
             text="⬅ Back to Dashboard",
             width=220,
-            command=lambda: parent.show_dashboard(current_user)
-        ).pack(pady=25)
+           
+            command=lambda: self.parent.show_dashboard(self.current_user),
+             **GRAY_BUTTON
+        ).pack(pady=10)
+
+    # ==========================
+    # SEND REQUEST
+    # ==========================
+    def send_skill_request(self):
+
+        success = send_request(
+            self.current_user[0],
+            self.selected_user[0]
+        )
+
+        print("Success returned:", success)
+
+        if success:
+            messagebox.showinfo(
+                "Success",
+                f"Skill Swap Request sent to {self.selected_user[0]}!"
+            )
+        else:
+            messagebox.showwarning(
+                "Already Sent",
+                f"You have already sent a request to {self.selected_user[0]}."
+            )
