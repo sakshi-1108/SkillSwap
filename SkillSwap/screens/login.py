@@ -2,6 +2,7 @@ import customtkinter as ctk
 from PIL import Image
 from tkinter import messagebox
 from database.database import login_user
+from theme import *
 
 
 class LoginScreen(ctk.CTkFrame):
