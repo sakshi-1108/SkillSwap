@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from tkinter import messagebox
 from database.database import register_user
-
+from theme import *
 
 class RegisterScreen(ctk.CTkFrame):
 
