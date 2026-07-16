@@ -101,19 +101,28 @@ python main.py
 
 ## Screenshots
 
-Add screenshots of:
+# 🖥️ Application Preview
 
-* Login Screen
-* Registration Screen
-* Dashboard
-* User Profile
-* Edit Profile
-* Request Management
-* Request History
+## Login Screen
+![Login Screen](screenshots/login.png)
 
-You can upload screenshots inside an `images/` folder and display them here using Markdown.
+## Registration Screen
+![Registration Screen](screenshots/register.png)
 
----
+## Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+## User Profile
+![Profile](screenshots/profile.png)
+
+## Edit Profile
+![Edit Profile](screenshots/edit_profile.png)
+
+## Requests
+![Requests](screenshots/requests.png)
+
+## Request History
+![History](screenshots/history.png)
 
 ## Future Enhancements
 
