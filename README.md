@@ -1,3 +1,13 @@
+<div align="center">
+
+# 🚀 SkillSwap
+
+### Exchange Skills. Grow Together.
+
+*A desktop application for collaborative learning.*
+
+</div>
+
 # SkillSwap
 
 A modern desktop application that connects people who want to **teach** and **learn** new skills. SkillSwap enables users to create profiles, discover others based on skills, send learning requests, and manage their learning journey through a clean and intuitive interface.
