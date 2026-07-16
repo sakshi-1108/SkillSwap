@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from tkinter import messagebox
 from theme import *
 from database.database import (
     get_all_users,
@@ -193,9 +194,20 @@ class DashboardScreen(ctk.CTkScrollableFrame):
             self,
             text="Logout",
             width=180,
-            command=self.parent.show_login,
+            command=self.logout,
             **DANGER_BUTTON
         ).pack(pady=25)
+
+    # ==========================
+    # LOGOUT (with confirmation)
+    # ==========================
+    def logout(self):
+
+        if messagebox.askyesno(
+            "Logout",
+            "Are you sure you want to logout?"
+        ):
+            self.parent.show_login()
 
     # ==========================
     # COMPUTE RECOMMENDED MATCHES (shared by stats + show_recommended)
