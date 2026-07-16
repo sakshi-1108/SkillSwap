@@ -13,6 +13,14 @@
 A modern desktop application that connects people who want to **teach** and **learn** new skills. SkillSwap enables users to create profiles, discover others based on skills, send learning requests, and manage their learning journey through a clean and intuitive interface.
 
 ---
+## 📊 Project Stats
+
+- **Language:** Python
+- **Architecture:** Modular
+- **GUI Framework:** CustomTkinter
+- **Database:** SQLite
+- **Development Environment:** Visual Studio Code
+- **Version Control:** Git & GitHub
 
 ## Features
 
