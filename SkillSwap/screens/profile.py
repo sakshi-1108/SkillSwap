@@ -126,14 +126,22 @@ class ProfileScreen(ctk.CTkFrame):
              state="disabled"
     ).pack(pady=20)
 
-        else:
+        elif status == "Rejected":
 
-         ctk.CTkButton(
-            self,
-          text="❌ Request Rejected",
-         width=260,
-         state="disabled"
-    ).pack(pady=20)
+            ctk.CTkLabel(
+                self,
+                text="❌ Previous request was rejected.",
+                font=("Segoe UI", 15, "bold"),
+                text_color="#EF4444"
+            ).pack(pady=(20, 5))
+
+            ctk.CTkButton(
+                self,
+                text="📩 Send Request Again",
+                width=260,
+                command=self.send_skill_request,
+                **BUTTON
+            ).pack(pady=(0, 20))
 
         # ==========================
         # BACK BUTTON
@@ -157,13 +165,13 @@ class ProfileScreen(ctk.CTkFrame):
             self.selected_user[0]
         )
 
-        print("Success returned:", success)
 
         if success:
             messagebox.showinfo(
                 "Success",
                 f"Skill Swap Request sent to {self.selected_user[0]}!"
             )
+            self.parent.show_profile(self.current_user, self.selected_user)
         else:
             messagebox.showwarning(
                 "Already Sent",
