@@ -164,12 +164,10 @@ class LoginScreen(ctk.CTkFrame):
         email = self.email_entry.get().strip()
         password = self.password_entry.get()
 
-        print("Email entered:", email)
-        print("Password entered:", password)
+      
 
         user = login_user(email, password)
 
-        print("User found:", user)
 
         if user:
             self.parent.show_dashboard(user)
