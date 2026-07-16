@@ -63,6 +63,20 @@ def register_user(name, email, password, skill, learn_skill):
     connection = sqlite3.connect("skillswap.db")
     cursor = connection.cursor()
 
+    # Check if email already exists
+    cursor.execute("""
+        SELECT *
+        FROM users
+        WHERE email=?
+    """, (email,))
+
+    existing_user = cursor.fetchone()
+
+    if existing_user:
+        connection.close()
+        return False
+
+    # Register new user
     cursor.execute("""
         INSERT INTO users(
             name,
@@ -78,6 +92,7 @@ def register_user(name, email, password, skill, learn_skill):
     connection.commit()
     connection.close()
 
+    return True
 
 # =====================================
 # LOGIN USER
@@ -185,9 +200,6 @@ def send_request(sender_id, receiver_name):
     connection = sqlite3.connect("skillswap.db")
     cursor = connection.cursor()
 
-    print("Sender ID:", sender_id)
-    print("Receiver:", receiver_name)
-
     cursor.execute("""
         SELECT *
         FROM requests
@@ -198,11 +210,18 @@ def send_request(sender_id, receiver_name):
 
     existing = cursor.fetchone()
 
-    print("Existing Request:", existing)
-
     if existing:
         connection.close()
         return False
+
+    # Clean up any old rejected requests between this sender/receiver
+    # so a fresh request doesn't get buried under stale history.
+    cursor.execute("""
+        DELETE FROM requests
+        WHERE sender_id=?
+        AND receiver_name=?
+        AND status='Rejected'
+    """, (sender_id, receiver_name))
 
     current_time = datetime.now().strftime("%d %b %Y, %I:%M %p")
 
@@ -237,6 +256,8 @@ def get_request_status(sender_id, receiver_name):
         FROM requests
         WHERE sender_id=?
         AND receiver_name=?
+        ORDER BY id DESC
+        LIMIT 1
     """, (sender_id, receiver_name))
 
     result = cursor.fetchone()
@@ -312,7 +333,7 @@ def reject_request(request_id):
     connection.commit()
     connection.close()
 
-    # =====================================
+# =====================================
 # COUNT PENDING REQUESTS
 # =====================================
 def get_pending_request_count(receiver_name):
@@ -433,8 +454,6 @@ def get_about(user_name):
     """, (user_name,))
 
     result = cursor.fetchone()
-    print("Getting about for:", user_name)
-    print("Result:", result)
 
     connection.close()
 
