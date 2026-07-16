@@ -176,6 +176,12 @@ class RequestsScreen(ctk.CTkScrollableFrame):
     # =====================================
     def reject(self, request_id):
 
+        if not messagebox.askyesno(
+            "Reject Request",
+            "Are you sure you want to reject this request?"
+        ):
+            return
+
         reject_request(request_id)
 
         messagebox.showinfo(
